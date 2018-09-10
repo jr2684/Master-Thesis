@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from scipy.spatial import distance
-import RBF
+from RBF import rbf
 
 '''
     The following method calculated the A matrix. In particular, we nest 2 different processes together. The first is the 
@@ -13,7 +13,7 @@ import RBF
                function- str. Gives the type of function that will be used for the calculations
         output: grid - multidim. array
 '''
-def coefficient_matrix(grid,function):
+def coefficient_matrix(grid,function,epsilon):
     def matrix_distances(grid):
         matrix_distances_refined = []
         for j in range(len(grid)):
@@ -24,11 +24,32 @@ def coefficient_matrix(grid,function):
             matrix_distances_refined.append(temp)
         return matrix_distances_refined
     matrix_evaluated_refined = []
+    a = rbf(function,epsilon)
     for i in matrix_distances(grid):
-        matrix_evaluated_refined.append([RBF.calculate(function,1,point) for point in i])
+        matrix_evaluated_refined.append([a.calculate(point) for point in i])
     return matrix_evaluated_refined
     
     
+    
+    
+def coefficient_matrix_optimized(grid,function,epsilon):
+    def matrix_distances_hermitian(grid):
+        matrix_distances_refined = []
+        for j in range(len(grid)):
+            temp = np.array([])
+            temp = np.append(temp,0)
+            for i in range(len(grid)-1):
+                if i<j:
+                    temp = np.append(temp,0)
+                else:
+                    temp = np.append(temp,distance.euclidean(grid[j], grid[i+1]))
+            matrix_distances_refined.append(temp)
+        return np.array(np.matrix(matrix_distances_refined) +np.matrix(matrix_distances_refined).T)
+    matrix_evaluated_refined = []
+    a = rbf(function,epsilon)
+    for i in matrix_distances_hermitian(grid):
+        matrix_evaluated_refined.append([a.calculate(point) for point in i])
+    return matrix_evaluated_refined
 """
 Here the test function is defined, along with a loop that produces the solution values f. We use these values
 to test the accuracy of our RBF method. In general we won't be using data that has been created with a 
@@ -53,3 +74,66 @@ def analytic_values(start_value,end_value,step_size):
         for j in i:
             vector_values_refined.append(j)
     return vector_values_refined
+
+    
+"""
+Checks if a matrix is square. 
+    Input: Matrix
+    Output: Boolean value
+"""
+def isSquare (m):
+    return all (len (row) == len (m) for row in m)
+    
+"""
+Since the standard library does not have a modified cholesky decomposition, the
+following method is used for its calculation(A = LDL*, where L is a lower unit
+triangular matrix, L* is its conjugate, and D is a diagonal matrix
+    Input: square positive definite hermitian matrix
+    output: L,D
+"""
+
+def ldl_decomp(A):
+    if isSquare(A) is False:
+        print("A must be square!")
+        return None,None
+    A = np.matrix(A)
+    if not (A.H == A).all():
+        print("A must be Hermitian!")
+        return None, None
+    else:
+        S = np.diag(np.diag(A))
+        Sinv = np.diag(1/np.diag(A))
+        D = np.matrix(S.dot(S))
+        Lch = np.linalg.cholesky(A)
+        L = np.matrix(Lch.dot(Sinv))
+        return L, D
+        
+"""
+The following is an intermediary function that will be used to clean up the
+coordinate values between transformations. Due to the machine epsilon, there 
+are miniscule values (on the order of -16 to -33) that are remenants of the
+functions used(This means converting between numerical systems). To clean
+things up, every coordinate value is checked for these small values. If the values
+present are smaller than the machine epsilon, then the value will be set to
+0. In the following method, *args is used, thus allowing for an arbitrary number
+of input values. In particular, the method works for a single value,
+an array of values, and a matrix of values. It is important to note that 
+it will only work for float and int values. If one tries to use strings, 
+then the method will break down.
+"""
+
+def clean_machine_ep(*args):
+    machine_epsilon = np.finfo(float).eps
+    for i in args:
+        if type(i) == float and np.abs(i) < machine_epsilon :
+                return 0
+        elif type(i) == list:
+            for item in range(len(i)):
+                if type(i[item]) == list:
+                    for j in range(len(i[item])):
+                        if np.abs(i[item][j]) < machine_epsilon:
+                            i[item][j] = 0
+                else:
+                    if np.abs(i[item]) < machine_epsilon:
+                        i[item] = 0
+    return i

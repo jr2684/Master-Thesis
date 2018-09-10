@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from vectors import Vector
 
+
 import numpy as np
 
 def perpendicular_vector(v):
@@ -26,4 +27,4 @@ def perpendicular_vector(v):
     # arbitrarily set a = b = 1
     # then the equation simplifies to
     #     c = -(x + y)/z
-    return Vector(1, 1, -1.0 * (v.x + v.y) / v.z)
+    return Vector(1,1,-1.0*(v.x+v.y)/v.z).vector/np.linalg.norm(Vector(1,1,-1.0*(v.x+v.y)/v.z).vector)

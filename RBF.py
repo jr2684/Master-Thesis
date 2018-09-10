@@ -6,7 +6,7 @@ import numpy.ma as ma
 
 
 
-"""class rbf:
+class rbf:
     
     def __init__(self,func = None, eps = None):
         if func == None and eps == None:
@@ -19,8 +19,8 @@ import numpy.ma as ma
         else:
             self.function = func
             self.epsilon = eps
-"""
-'''
+
+    '''
     All radial basis functions will be combined into a single method. The desired RBF can be chosen by giving the 
     keyword that is associated with that particular function.
             - 'gau' : gaussian 
@@ -35,37 +35,36 @@ import numpy.ma as ma
         output: 
             float value
     '''
-"""
+
     def return_func(self):
         print(self.function)
         
     def return_eps(self):
         print(self.epsilon)
-"""        
-def calculate(function,epsilon,r):
-    if function == 'gau':
-        return np.exp(-(epsilon*r)**2)
-    elif function == 'MQ':
-        return np.sqrt(1+(epsilon*r)**2)
-    elif function == 'IQ':
-        return 1/(1 +(epsilon*r)**2)
-    elif function == 'IMQ':
-        return 1/np.sqrt(1 + (epsilon*r)**2)
+        
+    def calculate(self,r):
+        if self.function == 'gau':
+            return np.exp(-(self.epsilon*r)**2)
+        elif self.function == 'MQ':
+            return np.sqrt(1+(self.epsilon*r)**2)
+        elif self.function == 'IQ':
+            return 1/(1 +(self.epsilon*r)**2)
+        elif self.function == 'IMQ':
+            return 1/np.sqrt(1 + (self.epsilon*r)**2)
+        elif self.function == 'TPS':
+            return (r**2)*np.log(r) if r > 0 else 0
 
-"""
-    This method produces a continuous heat map of the error.
-        Input:
-            ftype - string. Chosen rbf
-            evalue - float. epsilon value
-            x_values - array of ints
-            y_values - array of ints
-            error - array of ints
-        Output:
-            Graph
-
-"""
-
-def Produce_error_plot(ftype,evalue,x_values,y_values,error,data_points):
+    """
+        This method produces a continuous heat map of the error.
+            Input:
+                x_values - array of ints
+                y_values - array of ints
+                error - array of ints
+            Output:
+                Graph
+    
+    """
+def Produce_error_plot(ftype,evalue,x_values,y_values,error,interpolation_grid):
     x_list = np.array(x_values)
     y_list = np.array(y_values)
     z_list = np.array(error)
@@ -78,12 +77,14 @@ def Produce_error_plot(ftype,evalue,x_values,y_values,error,data_points):
     grid_x, grid_y = np.mgrid[x_list.min():x_list.max():1000j, y_list.min():y_list.max():1000j]
     method = 'cubic'
     plt.figure()
-    grid_z = scipy.interpolate.griddata(data_points,z_list,(grid_x, grid_y), method=method)
+    grid_z = scipy.interpolate.griddata(interpolation_grid,z_list,(grid_x, grid_y), method=method)
     # [pcolormesh with missing values?](https://stackoverflow.com/a/31687006/395857)
     plt.pcolormesh(grid_x, grid_y, ma.masked_invalid(grid_z), cmap='RdBu', vmin=np.nanmin(grid_z), vmax=np.nanmax(grid_z))
     plt.title(str('Error for '+ ftype + ' with epsilon = '+str(evalue)))
     #plt.title('{0} interpolation'.format(method))
     plt.colorbar()
+    plt.show()
     #plt.savefig('heatmap_interpolation_{0}.png'.format(method), dpi=300)
     #plt.clf()
     #plt.close()
+    

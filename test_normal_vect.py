@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
+from vectors import Vector
 from normal_vect import perpendicular_vector
 
 class NormalTestCase(unittest.TestCase):
