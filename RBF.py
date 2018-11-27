@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 import scipy.interpolate
 import numpy.ma as ma
 
-
-
 class rbf:
     
     def __init__(self,func = None, eps = None):
@@ -27,9 +25,10 @@ class rbf:
             - 'MQ' : multiquadratic
             - 'IQ' : inverse quadratic
             - 'IMQ' : Inverse Multiquadratic
+            - 'TPS' : Thin plate spline 
         inputs: 
             - epsilon-float parameter. Called the shape parameter and is used to determine how 'peaked' the RBF
-            is. THe closer to 0, the flatter the function is.
+            is. THe closer to 0, the sharper the function is.
             - func- string. Determines the type of RBF to be returned
             - a - float. The independent input variable of the problem
         output: 
@@ -44,15 +43,16 @@ class rbf:
         
     def calculate(self,r):
         if self.function == 'gau':
-            return np.exp(-(self.epsilon*r)**2)
+            return np.exp(-((r/self.epsilon)**2))
         elif self.function == 'MQ':
-            return np.sqrt(1+(self.epsilon*r)**2)
+            return np.sqrt(1+(r/self.epsilon)**2)
         elif self.function == 'IQ':
-            return 1/(1 +(self.epsilon*r)**2)
+            return 1/(1 +(r/self.epsilon)**2)
         elif self.function == 'IMQ':
-            return 1/np.sqrt(1 + (self.epsilon*r)**2)
+            return 1/np.sqrt(1 + (r/self.epsilon)**2)
         elif self.function == 'TPS':
-            return (r**2)*np.log(r) if r > 0 else 0
+            return ((r/self.epsilon)**2)*np.log(r/self.epsilon) if r > 0 else 0
+
 
     """
         This method produces a continuous heat map of the error.
@@ -69,18 +69,13 @@ def Produce_error_plot(ftype,evalue,x_values,y_values,error,interpolation_grid):
     y_list = np.array(y_values)
     z_list = np.array(error)
 
-    #plt.plot(x_list, y_list, 'ok')
-    #plt.tricontourf(x_list, y_list, z_list)
-    #plt.show()
-
-
     grid_x, grid_y = np.mgrid[x_list.min():x_list.max():1000j, y_list.min():y_list.max():1000j]
     method = 'cubic'
     plt.figure()
     grid_z = scipy.interpolate.griddata(interpolation_grid,z_list,(grid_x, grid_y), method=method)
     # [pcolormesh with missing values?](https://stackoverflow.com/a/31687006/395857)
     plt.pcolormesh(grid_x, grid_y, ma.masked_invalid(grid_z), cmap='RdBu', vmin=np.nanmin(grid_z), vmax=np.nanmax(grid_z))
-    plt.title(str('Error for '+ ftype + ' with epsilon = '+str(evalue)))
+    plt.title(str('Error'))
     #plt.title('{0} interpolation'.format(method))
     plt.colorbar()
     plt.show()

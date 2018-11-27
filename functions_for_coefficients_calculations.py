@@ -12,27 +12,9 @@ from RBF import rbf
         input: grid - multidim. array
                function- str. Gives the type of function that will be used for the calculations
         output: grid - multidim. array
-'''
+'''   
+    
 def coefficient_matrix(grid,function,epsilon):
-    def matrix_distances(grid):
-        matrix_distances_refined = []
-        for j in range(len(grid)):
-            temp = np.array([])
-            temp = np.append(temp,distance.euclidean(grid[j],grid[0]))
-            for i in range(len(grid)-1):
-                temp = np.append(temp,distance.euclidean(grid[j], grid[i+1]))
-            matrix_distances_refined.append(temp)
-        return matrix_distances_refined
-    matrix_evaluated_refined = []
-    a = rbf(function,epsilon)
-    for i in matrix_distances(grid):
-        matrix_evaluated_refined.append([a.calculate(point) for point in i])
-    return matrix_evaluated_refined
-    
-    
-    
-    
-def coefficient_matrix_optimized(grid,function,epsilon):
     def matrix_distances_hermitian(grid):
         matrix_distances_refined = []
         for j in range(len(grid)):
@@ -42,14 +24,36 @@ def coefficient_matrix_optimized(grid,function,epsilon):
                 if i<j:
                     temp = np.append(temp,0)
                 else:
-                    temp = np.append(temp,distance.euclidean(grid[j], grid[i+1]))
+                    temp = np.append(temp,(distance.euclidean(grid[j], grid[i+1])))
             matrix_distances_refined.append(temp)
         return np.array(np.matrix(matrix_distances_refined) +np.matrix(matrix_distances_refined).T)
     matrix_evaluated_refined = []
     a = rbf(function,epsilon)
     for i in matrix_distances_hermitian(grid):
         matrix_evaluated_refined.append([a.calculate(point) for point in i])
-    return matrix_evaluated_refined
+    return matrix_evaluated_refined    
+    
+def coefficient_matrix_3d(grid,function,epsilon):
+    def matrix_distances_hermitian(grid):
+        matrix_distances_refined = []
+        for j in range(len(grid)):
+            temp = np.array([])
+            temp = np.append(temp,0)
+            for i in range(len(grid)-1):
+                if i<j:
+                    temp = np.append(temp,0)
+                else:
+                    temp = np.append(temp,(arc_length(grid[j], grid[i+1])))
+            matrix_distances_refined.append(temp)
+        return np.array(np.matrix(matrix_distances_refined) +np.matrix(matrix_distances_refined).T)
+    matrix_evaluated_refined = []
+    a = rbf(function,epsilon)
+    for i in matrix_distances_hermitian(grid):
+        matrix_evaluated_refined.append([a.calculate(point) for point in i])
+    return matrix_evaluated_refined    
+    
+    
+    
 """
 Here the test function is defined, along with a loop that produces the solution values f. We use these values
 to test the accuracy of our RBF method. In general we won't be using data that has been created with a 
@@ -137,3 +141,45 @@ def clean_machine_ep(*args):
                     if np.abs(i[item]) < machine_epsilon:
                         i[item] = 0
     return i
+
+"""
+This method is used in place of the euclidean distance in the 3D case. Since we are finding the distance 
+on a sphere, it is better to be calculating the arc length.
+"""    
+def arc_length(x1,x2):
+    cc = np.dot(x1,x2)
+    if cc > 1:
+        cc = 1
+    if cc < -1:
+        cc = -1
+    return np.arccos(cc)   
+ 
+    
+'''
+This method is used to calculate the error. A number of different norms are calculated,
+along with giving the condition of the interpolation matrix.
+'''    
+def error_calculations(array):
+    error_linfty_u = []
+    error_linfty_v = []
+    error_rmse_u = []
+    error_rmse_v = []
+    error_l2_u = []
+    error_l2_v = []
+    condition_max = []
+    condition_min =[]
+    scale_values = []
+    for i in array:
+        scale_values.append(i[0][2])
+        error_l2_u.append(np.sqrt(sum([j[3] for j in i])))
+        error_l2_v.append(np.sqrt(sum([j[4] for j in i])))
+        error_linfty_u.append(max([j[3] for j in i]))
+        error_linfty_v.append(max([j[4] for j in i]))
+        error_rmse_u.append(np.sqrt((1/(len(i)))*sum([j[5] for j in i])))
+        error_rmse_v.append(np.sqrt((1/(len(i)))*sum([j[6] for j in i])))
+        condition_max.append(max([j[7] for j in i]))
+        condition_min.append(min([j[7] for j in i]))
+    return[scale_values,error_l2_u,error_l2_v,error_rmse_u,error_rmse_v,error_linfty_u,condition_max,condition_min]
+    
+    
+    

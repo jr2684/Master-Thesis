@@ -7,37 +7,6 @@ from operator import itemgetter
 from v_c_transformations import gc_to_cc
 from functions_for_coefficients_calculations import clean_machine_ep
 
-
-"""
-grid_refinement(left_origin,right_origin,refinement_level):
-
-The function outputs a square array consisting of all the gridpoints of a grid of dimensions left_origin x right_origin.
-We can iteratively change the size of the grid via the variable refinement_level.
-        Inputs:
-            left_origin:int
-            right_origin:int
-            refinement_level:int
-        Output:
-            An array with entries of the form (i,j)
-            
-        Notes:
-            
-    
-    """
-
-
-def grid_refinement(left_origin,right_origin,refinement_level):
-    refinement_level_tested = kosher_grid_values(refinement_level)
-    test_n = 2*refinement_level_tested +1
-    test_step = 1/refinement_level_tested
-    test_x = np.linspace(left_origin,right_origin,test_n)
-    test_y = np.linspace(left_origin,right_origin,test_n)
-    test_array = []
-    for i in np.arange(right_origin,(left_origin - test_step),-test_step):
-        for j in np.arange(left_origin,right_origin + test_step,test_step):
-            test_array.append((j,i))
-    return(test_array)
-
 """
 grid_refinement_rectangle(left,right, top, bottom,refinement_level):
 
@@ -59,7 +28,7 @@ of [-pi,pi). In order to make the interval open and exclude pi, some magic had t
         
     
     """
-def grid_refinement_rectangle_refactored(left,right,top,bottom,refinement_level):
+def grid_refinement_rectangle(left,right,top,bottom,refinement_level):
     refinement_level_tested = kosher_grid_values(refinement_level)
     test_n = 2*refinement_level_tested +1
     x = sorted(np.linspace(right,left,test_n,endpoint = False),reverse = False)
@@ -71,7 +40,7 @@ def grid_refinement_rectangle_refactored(left,right,top,bottom,refinement_level)
 Creates a square mesh. Can be seen as a special case of grid_refinement_
 rectangle_refactored
 """
-def grid_refinement_square_refactored(left_origin,right_origin,refinement_level):
+def grid_refinement_square(left_origin,right_origin,refinement_level):
     refinement_level_tested = kosher_grid_values(refinement_level)
     test_n = 2*refinement_level_tested +1
     x = np.linspace(left_origin,right_origin,test_n)
@@ -138,7 +107,7 @@ extrenuous values before performing the grid transformations
 #The final outputted array is analytic_positions, which consists of the unique grid values that will be used for the rest
 #of the calculations
 def grid_values(refinement_level):
-    values_temp = grid_refinement_rectangle_refactored(-np.pi,np.pi,np.pi/2,-np.pi/2,refinement_level)
+    values_temp = grid_refinement_rectangle(-np.pi,np.pi,np.pi/2,-np.pi/2,refinement_level)
     vector_poles = [values_temp[0],values_temp[-1]]
     temp_list = values_temp.copy()
     modified = [edge for edge in temp_list if edge[1] not in [-np.pi/2,np.pi/2]]
@@ -190,11 +159,11 @@ def midpoint_grid(grid,refinement,left,down):
 """produces a nonuniform grid of num_of_points vertices. These random grids should be the least
    accurate of all the the interpolation grids
 """
-
-def random_grid_normal(num_of_points,left,right,down,up):          
-    x = [round(random.uniform(left,right),3) for i in range(num_of_points)]
-    y = [round(random.uniform(down,up),3) for i in range(num_of_points)]
+def random_grid_normal(num_of_points,left,right,down,up,sigfig):          
+    x = [round(random.uniform(left,right),sigfig) for i in range(num_of_points)]
+    y = [round(random.uniform(down,up),sigfig) for i in range(num_of_points)]
     return [[x[i],y[i]] for i in range(num_of_points)]
+
 
 def random_grid_beta(num_of_points,left,right,down,up,alpha,beta):          
     x = [right*round(random.betavariate(alpha,beta),3) for i in range(int(num_of_points/2))] +[left*round(random.betavariate(alpha,beta),3) for i in range(int(num_of_points/2))]

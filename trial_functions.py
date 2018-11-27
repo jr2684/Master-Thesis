@@ -31,4 +31,4 @@ def vector_case_1(u1,u2,component):
         return a*w*(np.cos(u1))+a*k*(((np.cos(u1)))**(R-1))*((R*(np.sin(u1))**2)-np.cos(u1)**2)*np.cos(R*float(u2))
     elif component == 2:
         #represents v component
-        return -a*k*R*(np.cos(u1)**R-1)*np.sin(u1)*np.sin(R*u2)
+        return -a*k*R*(np.cos(u1)**(R-1))*np.sin(u1)*np.sin(R*u2)
